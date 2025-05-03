@@ -177,7 +177,7 @@ models:
     meta:
       primary_key: [state, year, month]
 
-  - name: fact_city_aqi_live_vs_historic
+  - name: fact_aqi_live_vs_historic
     description: "Final model comparing live AQI vs historic AQI index with daily update."
     columns:
       - name: city
