@@ -1,0 +1,196 @@
+version: 2
+
+models:
+  - name: stg_historic_weather_data
+    description: "Staging model for daily AQI and pollutant readings for selected Indian cities."
+    columns:
+      - name: city
+        description: "Name of the city where the AQI was recorded."
+      - name: reading_time
+        description: "Timestamp of the AQI reading."
+      - name: aqi
+        description: "Air Quality Index value."
+      - name: pm2_5
+        description: "Particulate matter 2.5 concentration."
+      - name: pm10
+        description: "Particulate matter 10 concentration."
+    meta:
+      primary_key: [city, reading_time]
+
+  - name: stg_historic_electricity_data_monthly
+    description: "Staging model for monthly electricity generation, emissions, and capacity by state."
+    columns:
+      - name: state
+        description: "Indian state name."
+      - name: reading_month
+        description: "Month and year of the data."
+      - name: category
+        description: "Main category (e.g., generation, emission, capacity)."
+      - name: subcategory
+        description: "Subcategory within the main category."
+      - name: metric_value
+        description: "Numeric value for the measurement."
+    meta:
+      primary_key: [state, reading_month, category, subcategory]
+
+  - name: stg_historic_per_capita
+    description: "Staging model for yearly per capita electricity consumption by state."
+    columns:
+      - name: state
+        description: "Indian state."
+      - name: year_start
+        description: "Year of record."
+      - name: per_capita_consumption
+        description: "Electricity consumption per person (kWh)."
+    meta:
+      primary_key: [state, year_start]
+
+  - name: stg_live_aqi_data
+    description: "Staging model for live AQI readings collected via API."
+    columns:
+      - name: city
+        description: "City name."
+      - name: reading_time
+        description: "Timestamp in IST when reading was taken."
+      - name: aqi
+        description: "Real-time AQI value."
+    meta:
+      primary_key: [city, reading_time]
+
+  - name: int_city_aqi_formatted
+    description: "Formatted AQI data with city to state mapping and casted data types."
+    columns:
+      - name: city
+        description: "City name."
+      - name: state
+        description: "Mapped state from city."
+      - name: reading_month
+        description: "Formatted month (YYYY-MM)."
+    meta:
+      primary_key: [city, reading_month]
+
+  - name: int_city_aqi_monthly
+    description: "Monthly aggregated AQI and pollutant levels per city with banding and index."
+    columns:
+      - name: city
+        description: "City name."
+      - name: state
+        description: "Mapped state."
+      - name: avg_aqi
+        description: "Average AQI index (1–5)."
+      - name: aqi_index
+        description: "Floored index of avg_aqi for fair comparison."
+      - name: aqi_category
+        description: "AQI category like Good, Fair, etc."
+      - name: year
+        description: "Year of aggregation."
+        tests:
+          - not_null
+      - name: month
+        description: "Month of aggregation."
+    meta:
+      primary_key: [city, year, month]
+
+  - name: int_real_time_aqi_data_cleaned
+    description: "Cleaned real-time AQI data with banding and timestamp breakdown."
+    columns:
+      - name: city
+        description: "City name."
+      - name: state
+        description: "Mapped state."
+      - name: reading_timestamp
+        description: "Original timestamp."
+      - name: reading_date
+        description: "Date portion of the timestamp."
+      - name: aqi
+        description: "Real-time AQI value."
+      - name: aqi_index
+        description: "AQI index based on standard bands."
+      - name: aqi_category
+        description: "Band/category assigned to AQI value."
+    meta:
+      primary_key: [city, reading_timestamp]
+
+  - name: int_state_electricity_summary
+    description: "Monthly state-wise total electricity generation, emissions, and capacity."
+    columns:
+      - name: state
+        description: "State name."
+      - name: year
+        description: "Year."
+      - name: month
+        description: "Month."
+      - name: total_generation_gwh
+        description: "Total electricity generation (GWh)."
+      - name: total_emissions_tco2
+        description: "Total emissions (tCO2)."
+      - name: total_capacity_mw
+        description: "Installed capacity (MW)."
+    meta:
+      primary_key: [state, year, month]
+
+  - name: int_aqi_live_vs_historic
+    description: "Comparison between live AQI index and historic AQI index with status tags."
+    columns:
+      - name: city
+        description: "City name."
+      - name: state
+        description: "Mapped state."
+      - name: reading_date
+        description: "Date of live AQI reading."
+      - name: current_aqi_index
+        description: "Live AQI index (1–5)."
+      - name: historic_aqi_index
+        description: "Historic AQI index from monthly average."
+      - name: aqi_status
+        description: "Comparison result: Improved, Worse, Same."
+    meta:
+      primary_key: [city, reading_date]
+
+  - name: fact_statewise_monthly_aqi_electricity
+    description: "Final fact table combining monthly AQI, electricity summary, per capita, and season."
+    columns:
+      - name: state
+        description: "Indian state."
+      - name: year
+        description: "Year of record."
+        tests:
+          - not_null
+      - name: month
+        description: "Month of record."
+      - name: city
+        description: "City representing the state (one per state)."
+      - name: avg_aqi
+        description: "Average AQI index."
+      - name: aqi_category
+        description: "Band/category for AQI."
+      - name: season
+        description: "Season label (Winter, Summer, etc.)."
+      - name: total_generation_gwh
+        description: "Electricity generated in GWh."
+      - name: total_emissions_tco2
+        description: "Emissions in tCO2."
+      - name: total_capacity_mw
+        description: "Capacity in MW."
+      - name: per_capita_consumption
+        description: "Electricity usage per person."
+    meta:
+      primary_key: [state, year, month]
+
+  - name: fact_city_aqi_live_vs_historic
+    description: "Final model comparing live AQI vs historic AQI index with daily update."
+    columns:
+      - name: city
+        description: "City name."
+      - name: state
+        description: "State name."
+      - name: reading_date
+        description: "Date of live AQI reading."
+      - name: current_aqi_index
+        description: "Live AQI index (1–5)."
+      - name: historic_aqi_index
+        description: "Historic AQI index (monthly average)."
+      - name: aqi_status
+        description: "Status: Improved, Same, or Worse."
+    meta:
+      primary_key: [city, reading_date]
