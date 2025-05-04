@@ -180,17 +180,47 @@ models:
   - name: fact_aqi_live_vs_historic
     description: "Final model comparing live AQI vs historic AQI index with daily update."
     columns:
-      - name: city
-        description: "City name."
-      - name: state
-        description: "State name."
-      - name: reading_date
-        description: "Date of live AQI reading."
-      - name: current_aqi_index
-        description: "Live AQI index (1–5)."
-      - name: historic_aqi_index
-        description: "Historic AQI index (monthly average)."
-      - name: aqi_status
-        description: "Status: Improved, Same, or Worse."
+    - name: city
+      description: "City name."
+
+    - name: state
+      description: "State name."
+
+    - name: reading_date
+      description: "Date of live AQI reading."
+      tests:
+        - not_null
+
+    - name: current_aqi_index
+      description: "Live AQI index (1–5)."
+
+    - name: historic_aqi_index
+      description: "Historic AQI index (monthly average)."
+
+    - name: aqi_status
+      description: "Status: Improved, Same, or Worse."
+      tests:
+        - not_null
+        - accepted_values:
+            values: ['Improved', 'Same', 'Worse']
+
     meta:
       primary_key: [city, reading_date]
+
+  - name: int_state_generation_emission_combined
+    description: "Combined intermediate model showing generation by source and total power sector emissions."
+    columns:
+      - name: state
+        description: "Indian state name."
+      - name: year
+        description: "Year of data."
+      - name: month
+        description: "Month of data."
+      - name: energy_source
+        description: "Type of energy source (e.g., coal, solar, hydro)."
+      - name: total_generation_gwh
+        description: "Total generation in GWh for that energy source."
+      - name: total_emissions_tco2
+        description: "Total power sector emissions (across all sources) in tCO2 for the state/month."
+    meta:
+      primary_key: [state, year, month, energy_source]
