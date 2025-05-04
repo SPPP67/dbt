@@ -1,0 +1,13 @@
+data_management_2:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: dm2-project-458114
+      dataset: dm2_project
+      threads: 1
+      timeout_seconds: 300
+      location: US
+      keyfile: /workspace/dbt-user-creds-458114.json
+      
